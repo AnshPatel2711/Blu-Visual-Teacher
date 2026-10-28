@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101522">
+  <title>Blu Visual Teacher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="#"><span class="brand-mark">b</span><span>Blu <b>Visual Teacher</b></span></a>
+      <span class="offline"><i></i> LOCAL · OFFLINE LESSONS</span>
+    </header>
+
+    <section class="intro">
+      <div id="lesson-eyebrow" class="eyebrow">LOCAL · VISUAL LEARNING</div>
+      <h1 id="lesson-title">Learn a concept, step by step.</h1>
+      <p id="lesson-description">Enter any topic to build a short visual lesson with narration.</p>
+    </section>
+
+    <section class="topic-form" aria-label="Generate a visual lesson">
+      <form id="lesson-form">
+        <label for="topic-input">What concept should we teach?</label>
+        <div class="topic-row">
+          <input id="topic-input" name="topic" type="text" maxlength="120" placeholder="For example: photosynthesis, Python loops, or if/else" required>
+          <button id="generate-button" type="submit">Generate Lesson</button>
+        </div>
+
+        <div class="options-grid">
+          <div class="option">
+            <label for="level-select">Study level</label>
+            <select id="level-select" name="level">
+              <option value="Auto" selected>Auto</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+          <div class="option">
+            <label for="duration-select">Duration</label>
+            <select id="duration-select" name="duration">
+              <option value="30">30 s</option>
+              <option value="45" selected>45 s</option>
+              <option value="60">60 s</option>
+              <option value="90">90 s</option>
+            </select>
+          </div>
+          <div class="option">
+            <label for="language-select">Language</label>
+            <select id="language-select" name="language">
+              <option value="English" selected>English</option>
+              <option value="Hindi">Hindi (हिन्दी)</option>
+              <option value="Bengali">Bengali (বাংলা)</option>
+              <option value="Tamil">Tamil (தமிழ்)</option>
+            </select>
+            <small class="hint">English uses Kokoro/Zira. Hindi, Bengali and Tamil use local eSpeak NG (offline). Quality may differ.</small>
+          </div>
+        </div>
+
+        <fieldset class="visual-prefs">
+          <legend>How should Blu explain the topic? (optional)</legend>
+          <label><input type="checkbox" name="visual" value="let_decide" checked> Let Blu decide</label>
+          <label><input type="checkbox" name="visual" value="cards"> Explain with diagrams</label>
+          <label><input type="checkbox" name="visual" value="sequence"> Break it into steps</label>
+          <label><input type="checkbox" name="visual" value="compare"> Compare concepts</label>
+          <label><input type="checkbox" name="visual" value="cycle"> Show how it works</label>
+        </fieldset>
+        <p id="generation-status" role="status" aria-live="polite">No lesson is generated on startup. Enter a topic and click Generate Lesson to build one locally.</p>
+      </form>
+    </section>
+
+    <section class="player-card" aria-label="Lesson video player">
+      <video id="lesson-video" controls playsinline preload="none" poster="poster.svg">
+        Your browser does not support MP4 video.
+      </video>
+      <div class="player-footer">
+        <div class="player-meta"><span class="live-dot"></span><span>Lesson preview</span><span class="divider">·</span><span>English narration</span></div>
+        <a id="download-video" class="download" href="#" aria-disabled="true" download="blu-visual-lesson.mp4"><span aria-hidden="true">↓</span> Export MP4</a>
+      </div>
+    </section>
+
+    <section class="lesson-notes">
+      <div><span class="step-number">01</span><div><h2>Lesson idea</h2><p>Enter a topic to generate a lesson.</p></div></div>
+      <div><span class="step-number">02</span><div><h2>Explanation</h2><p>Each scene uses the generated lesson plan.</p></div></div>
+      <div><span class="step-number">03</span><div><h2>Visuals</h2><p>Diagrams, examples, narration, and captions stay aligned.</p></div></div>
+    </section>
+    <footer>Made to teach clearly, one idea at a time.</footer>
+  </main>
+
+  <script>
+    const form = document.getElementById("lesson-form");
+    const topicInput = document.getElementById("topic-input");
+    const generateButton = document.getElementById("generate-button");
+    const status = document.getElementById("generation-status");
+    const video = document.getElementById("lesson-video");
+    const download = document.getElementById("download-video");
+    const levelSelect = document.getElementById("level-select");
+    const durationSelect = document.getElementById("duration-select");
+    const languageSelect = document.getElementById("language-select");
+
+    function clearLessonPreview() {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+
+      download.href = "#";
+      download.setAttribute("aria-disabled", "true");
+    }
+
+    // Mutual exclusion for "Let Blu decide" vs specific visual preferences.
+    const letDecideBox = document.querySelector('input[name="visual"][value="let_decide"]');
+    const specificBoxes = Array.from(document.querySelectorAll('input[name="visual"]:not([value="let_decide"])'));
+    function syncVisualPrefs() {
+      if (letDecideBox && letDecideBox.checked) {
+        specificBoxes.forEach((b) => { b.checked = false; });
+      }
+      if (letDecideBox && !specificBoxes.some((b) => b.checked) && !letDecideBox.checked) {
+        letDecideBox.checked = true;
+      }
+    }
+    specificBoxes.forEach((box) => {
+      box.addEventListener("change", () => {
+        if (box.checked && letDecideBox) letDecideBox.checked = false;
+        if (!specificBoxes.some((b) => b.checked) && letDecideBox) letDecideBox.checked = true;
+      });
+    });
+    if (letDecideBox) {
+      letDecideBox.addEventListener("change", syncVisualPrefs);
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const topic = topicInput.value.trim();
+      if (!topic) return;
+
+      generateButton.disabled = true;
+      status.textContent = "Planning, narrating, and rendering your lesson locally…";
+
+      try {
+        const letDecide = document.querySelector('input[name="visual"][value="let_decide"]');
+        const specificBoxes = Array.from(document.querySelectorAll('input[name="visual"]:not([value="let_decide"])'));
+
+        const visualPrefs = letDecide && letDecide.checked
+          ? []
+          : specificBoxes.filter((b) => b.checked).map((b) => b.value);
+
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            topic,
+            level: levelSelect.value,
+            duration: Number(durationSelect.value),
+            language: languageSelect.value,
+            visual_preferences: visualPrefs
+          })
+        });
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().includes("application/json")) {
+          throw new Error("The local lesson API did not respond. Restart Blu Visual Teacher with start.ps1 and try again.");
+        }
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || "Lesson generation failed.");
+        }
+
+        if (!result.preview_url || !result.export_url || !result.lesson) {
+          throw new Error("The lesson was generated, but its preview was not made available.");
+        }
+
+        const previewReady = new Promise((resolve, reject) => {
+          const timeout = setTimeout(
+            () => reject(new Error("The generated video preview did not load.")),
+            15000
+          );
+
+          video.addEventListener("loadedmetadata", () => {
+            clearTimeout(timeout);
+            resolve();
+          }, { once: true });
+
+          video.addEventListener("error", () => {
+            clearTimeout(timeout);
+            reject(new Error("The generated video preview could not be opened."));
+          }, { once: true });
+        });
+
+        video.src = `${result.preview_url}?updated=${Date.now()}`;
+        video.load();
+
+        try {
+          await previewReady;
+        } catch (error) {
+          clearLessonPreview();
+          throw error;
+        }
+
+        const lesson = result.lesson;
+
+        document.getElementById("lesson-eyebrow").textContent =
+          `${(lesson.subject || "Topic").toUpperCase()} · ${(lesson.level || "BEGINNER").toUpperCase()} LESSON`;
+        document.getElementById("lesson-title").textContent = lesson.title;
+        document.getElementById("lesson-description").textContent =
+          lesson.scenes[0].narration;
+        document.title = `Blu Visual Teacher · ${lesson.title}`;
+
+        document.querySelectorAll(".lesson-notes > div").forEach((item, index) => {
+          const scene = lesson.scenes[index];
+          if (!scene) return;
+
+          item.querySelector("h2").textContent = scene.title;
+          item.querySelector("p").textContent = scene.narration;
+        });
+
+        download.href = result.export_url;
+        download.removeAttribute("aria-disabled");
+
+        video.play().catch(() => {});
+        status.textContent = result.fallback
+          ? "The local planner could not create this lesson; the built-in Python if/else fallback is shown."
+          : `Lesson generated locally and ready (${result.duration} seconds).`;
+
+      } catch (error) {
+        clearLessonPreview();
+        status.textContent =
+          `Generation failed: ${error.message || "the lesson could not be built."}`;
+      } finally {
+        generateButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

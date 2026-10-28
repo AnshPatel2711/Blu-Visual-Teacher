@@ -1,0 +1,32 @@
+{
+  "title": "Make a decision with if–else",
+  "subject": "Python",
+  "language": "English",
+  "scenes": [
+    {
+      "title": "Programs can choose",
+      "narration": "A program can make a choice. In Python, if and else let it choose what to do based on a condition. This decision-making is how programs handle different scenarios in real-world situations, like grading systems or game logic.",
+      "kind": "intro"
+    },
+    {
+      "title": "Ask a true-or-false question",
+      "narration": "Conditions check if a value meets a specific criteria using operators like >=. For example, checking if a score is at least fifty (50) creates a true or false answer. When the score is seventy-two (72), the condition is true and directs the program to the 'pass' path. A common misconception is that >= includes the exact threshold, but beginners often confuse it with > (which excludes the threshold). This pattern ensures precise handling of thresholds.",
+      "kind": "condition"
+    },
+    {
+      "title": "Follow the matching path",
+      "narration": "When the condition is true, the program executes the indented code under if. For a score of seventy-two, this triggers the response: 'Pass'. The value (72) is processed through the condition check and converted into a decision flow.",
+      "kind": "true"
+    },
+    {
+      "title": "Use else for the other case",
+      "narration": "When the condition is false, the program skips the if block and executes the indented code under else. For a score of thirty-five, the response is 'Try again'. This shows how programs handle exceptions or alternative paths when thresholds aren't met.",
+      "kind": "false"
+    },
+    {
+      "title": "That’s if–else",
+      "narration": "If checks a condition, and else handles the other outcome. This pattern lets programs choose between two paths based on thresholds. Remember: >= ensures inclusivity of the exact threshold value, which is critical for accurate decision-making in real-world applications like grading or security checks.",
+      "kind": "summary"
+    }
+  ]
+}
