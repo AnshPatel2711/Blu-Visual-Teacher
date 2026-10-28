@@ -63,6 +63,14 @@ def _espeak_synthesize(text, output_path, language):
     lib.espeak_SetVoiceByName.restype = ctypes.c_int
     if lib.espeak_SetVoiceByName(voice.encode()) != 0:
         raise RuntimeError("eSpeak NG voice not available: %s" % voice)
+    # Sensible language-specific pacing for installed eSpeak NG Indian-language voices.
+    rate = {"Hindi": 145, "Bengali": 145, "Tamil": 140}.get(language, 160)
+    lib.espeak_SetParameter.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int]
+    lib.espeak_SetParameter.restype = ctypes.c_int
+    lib.espeak_SetParameter(0, rate, 0)   # rate (words per minute)
+    lib.espeak_SetParameter(1, 100, 0)   # volume
+    lib.espeak_SetParameter(2, 50, 0)    # pitch
+    lib.espeak_SetParameter(3, 50, 0)    # pitch range
     text_bytes = (text or "").encode("utf-8") + b"\x00"
     lib.espeak_Synth.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.c_uint, ctypes.c_int, ctypes.c_uint, ctypes.c_uint]
     lib.espeak_Synth.restype = ctypes.c_int
